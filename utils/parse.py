@@ -27,7 +27,7 @@ def parse_option():
     parser.add_argument('--learning_rate', type=float, default=0.01,
                         help='learning rate')
     # model dataset
-    parser.add_argument('--dataset_name', type=str, default='UWaveGestureLibraryAll',
+    parser.add_argument('--dataset_name', type=str, default='TSC',
                         choices=['CricketX',
                                  'UWaveGestureLibraryAll',
                                  'InsectWingbeatSound',
@@ -46,6 +46,7 @@ def parse_option():
                         help='Data path for checkpoint.')
     # method
     parser.add_argument('--backbone', type=str, default='SimConv4')
+    parser.add_argument('--val', type=bool, default=False)
     parser.add_argument('--model_name', type=str, default='SemiSOP',
                         choices=['SemiSOP', 'supervised'], help='choose method')
 
