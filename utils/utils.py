@@ -3,6 +3,17 @@
 import json
 import os
 import datetime
+from yaml import load, dump
+from yaml import CLoader as Loader
+
+def count_parameters(model,only_trainable=False):
+    if only_trainable:
+        total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f'{total_params/(1024*1024):.2f}M training parameters')
+    else:
+        total_params = sum(p.numel() for p in model.parameters())
+        print(f'{total_params / (1024 * 1024):.2f}M total parameters')
+
 
 def get_config_from_json(json_file):
     """
@@ -83,3 +94,37 @@ def convert_to_tuner_config(config, trial):
                 else:
                     raise ValueError("Expected the tuner hyper parameter to have type int or float")
     return config
+
+
+
+class Config:
+    def __init__(
+            self,
+            backbone_file_path='experiments/configs/config.yaml',
+            default_config_file_path='experiments/TOFL.yaml',
+            verbose: bool = False):
+        """
+        Class to read and parse the config.yml file
+		"""
+        self.backbone_file_path = backbone_file_path
+        self.default_config_file_path = default_config_file_path
+        self.verbose = verbose
+
+    def parse(self):
+        with open(self.backbone_file_path, 'rb') as f:
+            self.config = load(f, Loader=Loader)
+
+        with open(self.default_config_file_path, 'rb') as f:
+            default_config = load(f, Loader=Loader)
+
+        for key in default_config.keys():
+            if self.config.get(key) is None:
+                self.config[key] = default_config[key]
+                if self.verbose:
+                    print(f"Using default config for {key} : {default_config[key]}")
+
+        return self.config
+
+    def save_config(self):
+        with open(self.backbone_file_path, 'w') as f:
+            dump(self.config, f)

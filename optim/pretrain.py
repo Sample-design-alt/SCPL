@@ -4,21 +4,25 @@ import torch
 import utils.transforms as transforms
 from dataloader.ucr2018 import *
 import torch.utils.data as data
-from model.models import Model_SemiTime
-from model.semiSOP import Model_SemiSOP
+from model.models import TOFL
+from model.TOFL import Model_TOFL
+from model.MTL import Model_MTL
 from model.model_backbone import SimConv4
 from model.model_res_backbone import Resv4
 from model.inception.inceptiontime import InceptionTime
 from torch.utils.data.sampler import SubsetRandomSampler
+from utils.trainer_strategies import get_backbone
+from utils.utils import count_parameters
 
 
 
 
-def train_SemiTime(x_train, y_train, x_val, y_val, x_test, y_test, opt, configuration):
+
+def SemiTrain(x_train, y_train, x_val, y_val, x_test, y_test, opt, configuration):
     K = configuration['data_params']['K']
     batch_size = opt.batch_size  # 128 has been used in the paper
     tot_epochs = opt.epochs  # 400 has been used in the paper
-    feature_size = configuration['model_params']['feature']
+    feature_size = configuration['model_params']['d_model']
     ckpt_dir = opt.ckpt_dir
 
     prob = 0.2  # Transform Probability
@@ -56,23 +60,34 @@ def train_SemiTime(x_train, y_train, x_val, y_val, x_test, y_test, opt, configur
 
     tensor_transform = transforms.ToTensor()
 
-    if opt.model_name == 'SemiTime':
-        backbone = SimConv4(config=configuration).cuda()
-        model = Model_SemiTime(backbone, configuration, feature_size, configuration['data_params']['nb_class']).cuda()
-    else:
+    # if opt.model_name == 'SemiTime':
+    #     backbone = SimConv4(config=configuration).cuda()
+    #     model = TOFL(backbone, configuration, feature_size, configuration['data_params']['nb_class']).cuda()
+    # else:
         # backbone = Resv4(config=configuration).cuda()
-        backbone =InceptionTime(1,configuration['data_params']['nb_class']).cuda()
-        model = Model_SemiSOP(backbone, configuration, feature_size,configuration['data_params']['nb_class']).cuda()
+    # backbone =InceptionTime(1,configuration['data_params']['nb_class']).cuda()
+    backbone = get_backbone(opt, configuration)
+
 
 
     train_set_labeled = UCR2018(data=x_train, targets=y_train, transform=train_transform_label)
 
-    train_set = MultiUCR2018_PF(data=x_train, targets=y_train, K=K,
-                                transform=train_transform,
-                                transform_cuts=cutPF_transform,
-                                totensor_transform=tensor_transform)
+    if opt.model_name =='TOFL':
+        model = Model_TOFL(backbone, configuration, feature_size, configuration['data_params']['nb_class']).cuda()
+        train_set = MultiUCR2018_PF(data=x_train, targets=y_train, K=K,
+                                    transform=train_transform,
+                                    transform_cuts=cutPF_transform,
+                                    totensor_transform=tensor_transform)
+    if opt.model_name == 'MTL':
+        model = Model_MTL(backbone, configuration, feature_size, configuration['data_params']['nb_class']).cuda()
 
-    val_set = UCR2018(data=x_val, targets=y_val, transform=tensor_transform)
+        train_set = MTL(data=x_train, targets=y_train, K=K,
+                                    transform=train_transform,
+                                    transform_cuts=cutPF_transform,
+                                    totensor_transform=tensor_transform)
+    # val_set = UCR2018(data=x_val, targets=y_val, transform=tensor_transform)
+    count_parameters(model, only_trainable=True)
+    count_parameters(model, only_trainable=False)
     test_set = UCR2018(data=x_test, targets=y_test, transform=tensor_transform)
 
     train_dataset_size = len(train_set_labeled)
@@ -87,13 +102,13 @@ def train_SemiTime(x_train, y_train, x_val, y_val, x_test, y_test, opt, configur
     train_loader = torch.utils.data.DataLoader(train_set,
                                                batch_size=batch_size,
                                                shuffle=True)
-    val_loader = torch.utils.data.DataLoader(val_set, batch_size=batch_size, shuffle=False)
+    # val_loader = torch.utils.data.DataLoader(val_set, batch_size=batch_size, shuffle=False)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
     torch.save(model.backbone.state_dict(), '{}/backbone_init.tar'.format(ckpt_dir))
     test_acc, acc_unlabel, best_epoch = model.train(tot_epochs=tot_epochs, train_loader=train_loader,
                                                     train_loader_label=train_loader_label,
-                                                    val_loader=val_loader,
+                                                    val_loader=test_loader,
                                                     test_loader=test_loader,
                                                     opt=opt, config=configuration)
 

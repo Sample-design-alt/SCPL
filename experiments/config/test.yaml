@@ -1,4 +1,4 @@
-data_params:
+ata_params:
   K: 4
   alpha: 0.5
   label_ratio: 0.4
