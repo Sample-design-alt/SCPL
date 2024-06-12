@@ -3,5 +3,6 @@ datasets
 ckpt
 results
 img
+.idea
 gather_figure
 dataloader/TSC
