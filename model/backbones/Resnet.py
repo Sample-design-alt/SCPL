@@ -91,7 +91,7 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, task='classification'):
         x = x.transpose(1, 2).contiguous()
 
         x = self.bottleneck(x)
@@ -101,8 +101,18 @@ class ResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        X = self.adaptive_avg_pool(x)
-        X = self.flatten(X)
-        output = F.normalize(X, dim=1)
+        # X = self.adaptive_avg_pool(x)
+        # X = self.flatten(X)
+        # output = F.normalize(X, dim=1)
+
+        if task == 'prediction':
+            output = F.normalize(x, dim=1)
+            # output = output.transpose(1, 2).contiguous()
+            return output
+        else:
+            X = self.adaptive_avg_pool(x)
+            X = self.flatten(X)
+            output = F.normalize(X, dim=1)
+            return output
 
         return output

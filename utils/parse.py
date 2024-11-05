@@ -14,7 +14,7 @@ def parse_option():
                         help='feature_size')
     parser.add_argument('--num_workers', type=int, default=16,
                         help='num of workers to use')
-    parser.add_argument('--epochs', type=int, default=2000,
+    parser.add_argument('--epochs', type=int, default=500,
                         help='number of training epochs')
     parser.add_argument('--patience', type=int, default=200,
                         help='training patience')
@@ -27,7 +27,7 @@ def parse_option():
     parser.add_argument('--learning_rate', type=float, default=0.01,
                         help='learning rate')
     # model dataset
-    parser.add_argument('--dataset_name', type=str, default='CricketX',
+    parser.add_argument('--dataset_name', type=str, default='XJTU',
                         choices=['CricketX',
                                  'UWaveGestureLibraryAll',
                                  'InsectWingbeatSound',
@@ -45,10 +45,10 @@ def parse_option():
     parser.add_argument('--ckpt_dir', type=str, default='./ckpt/',
                         help='Data path for checkpoint.')
     # method
-    parser.add_argument('--backbone_name', type=str, default='Inception', choices=['SimConv4', 'Inception', 'Mamba', 'Transformer','Resnet'])
+    parser.add_argument('--backbone_name', type=str, default='GTF', choices=['SimConv4','GTF', 'Inception', 'Mamba', 'Transformer','Resnet'])
     parser.add_argument('--val', type=bool, default=False)
-    parser.add_argument('--model_name', type=str, default='TOFL',
-                        choices=['SemiSOP', 'supervised', 'TOFL', 'MTL'], help='choose method')
+    parser.add_argument('--model_name', type=str, default='SemiTime',
+                        choices=['SemiSOP', 'supervised', 'TOFL', 'MTL','SemiTime'], help='choose method')
 
     opt = parser.parse_args()
     return opt

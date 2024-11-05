@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class Inception(nn.Module):
-    def __init__(self, in_channels, n_filters=32, kernel_sizes=[9, 19, 39, 59], bottleneck_channels=32,
+    def __init__(self, in_channels, n_filters=32, kernel_sizes=[59, 39, 19, 9], bottleneck_channels=32,
                  activation=nn.ReLU()):
         super(Inception, self).__init__()
         if in_channels > 1:
@@ -105,9 +105,6 @@ class Inception(nn.Module):
         y_maxpool = self.max_pool(X)
         y4 = self.conv_maxpool(y_maxpool)
 
-        y1 = self.fuse1(y4) * y1
-        y2 = self.fuse2(y1) * y2
-        y3 = self.fuse3(y2) * y3
 
         y = torch.cat([y1, y2, y3, y4], axis=1)  # preserve
         y = self.bn(y)

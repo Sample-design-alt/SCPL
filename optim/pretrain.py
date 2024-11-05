@@ -7,6 +7,7 @@ import torch.utils.data as data
 from model.models import TOFL
 from model.TOFL import Model_TOFL
 from model.MTL import Model_MTL
+from model.SemiTime import SemiTime
 from model.model_backbone import SimConv4
 from model.model_res_backbone import Resv4
 from model.inception.inceptiontime import InceptionTime
@@ -78,13 +79,22 @@ def SemiTrain(x_train, y_train, x_val, y_val, x_test, y_test, opt, configuration
                                     transform=train_transform,
                                     transform_cuts=cutPF_transform,
                                     totensor_transform=tensor_transform)
-    if opt.model_name == 'MTL':
+
+    elif opt.model_name =='SemiTime':
+        model = SemiTime(backbone, configuration, feature_size, configuration['data_params']['nb_class']).cuda()
+        train_set = MultiUCR2018_PF(data=x_train, targets=y_train, K=K,
+                                    transform=train_transform,
+                                    transform_cuts=cutPF_transform,
+                                    totensor_transform=tensor_transform)
+    elif opt.model_name == 'MTL':
         model = Model_MTL(backbone, configuration, feature_size, configuration['data_params']['nb_class']).cuda()
 
         train_set = MTL(data=x_train, targets=y_train, K=K,
                                     transform=train_transform,
                                     transform_cuts=cutPF_transform,
                                     totensor_transform=tensor_transform)
+    else:
+        raise NotImplementedError
     # val_set = UCR2018(data=x_val, targets=y_val, transform=tensor_transform)
     count_parameters(model, only_trainable=True)
     count_parameters(model, only_trainable=False)
